@@ -98,9 +98,32 @@ class MessageHandler:
                 self.context.add_to_history("bot", reply)
                 return
 
-            success, result = self.engine.execute(decision)
             action = decision.get("action", "")
             data = decision.get("data", {})
+
+            # Bypass: if AI used "query" but user asks about stored data → force read_file
+            if action == "query":
+                msg_lower = msg.lower()
+                if any(w in msg_lower for w in ["задач", "завдан", "справ", "нагадуван", "remind", "task"]):
+                    action = "read_file"
+                    decision["action"] = "read_file"
+                    decision["target"] = {"folder": "Zefirka", "filename": "tasks.md"}
+                elif any(w in msg_lower for w in ["бюджет", "витрат", "фінанс", "грош", "budget", "expense"]):
+                    action = "read_file"
+                    decision["action"] = "read_file"
+                    decision["target"] = {"folder": "Zefirka", "filename": "finances.md"}
+                elif any(w in msg_lower for w in ["проект", "project"]):
+                    action = "read_file"
+                    decision["action"] = "read_file"
+                    decision["target"] = {"folder": "Zefirka", "filename": "projects.md"}
+                elif any(w in msg_lower for w in ["погод", "weather"]):
+                    action = "get_weather"
+                    decision["action"] = "get_weather"
+
+            if action == "query" and decision.get("response", "").startswith("Зараз перевірю"):
+                decision["response"] = "На жаль, я не можу знайти цю інформацію. Спробуй уточнити запит."
+
+            success, result = self.engine.execute(decision)
 
             # read_file → re-ask AI
             if action == "read_file":
