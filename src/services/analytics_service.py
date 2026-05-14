@@ -14,6 +14,7 @@ from src.logger import setup_logger
 logger = setup_logger(__name__)
 config = get_config()
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
+os.makedirs(DATA_DIR, exist_ok=True)
 STATE_FILE = os.path.join(DATA_DIR, "scheduler_state.json")
 
 WEEKLY_PROMPT = """You are Zefirka, a personal AI assistant. Generate a weekly digest.
