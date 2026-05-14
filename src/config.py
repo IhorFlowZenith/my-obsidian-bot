@@ -1,9 +1,16 @@
 """Configuration module for Zefirka Bot"""
 
 import os
+import time
 from dotenv import load_dotenv
 
 load_dotenv()
+
+os.environ["TZ"] = os.getenv("USER_TIMEZONE", "Europe/Kyiv")
+try:
+    time.tzset()
+except AttributeError:
+    pass
 
 
 class Config:
