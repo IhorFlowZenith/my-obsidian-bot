@@ -453,11 +453,27 @@ class SmartActionEngine:
 
     def _delete_file(self, data: dict, folder: str, filename: str) -> Tuple[bool, str]:
         file_path = f"{folder}/{filename}"
+        if not data.get("confirmed"):
+            return False, "⚠️ Ти впевнений? Це незворотна дія. Напиши 'так' для підтвердження."
+
         file_data = self.github.get_file(file_path)
         if not file_data:
             return False, "❌ File not found"
-        if not isinstance(file_data, dict):
-            return False, f"❌ '{file_path}' is a directory, not a file"
+
+        # If it's a directory, delete all files inside
+        if isinstance(file_data, list):
+            deleted = 0
+            for item in file_data:
+                if item["type"] == "file":
+                    self.github.delete_file(
+                        f"{file_path}/{item['name']}",
+                        f"Deleted: {item['name']}",
+                        item["sha"],
+                    )
+                    deleted += 1
+            return True, f"🗑 Папка '{file_path}' видалена ({deleted} файлів)"
+
+        # Regular file
         sha = file_data.get("sha")
         ok = self.github.delete_file(file_path, f"Deleted: {filename}", sha)
         return (True, f"🗑 Deleted: {file_path}") if ok else (False, "❌ Delete failed")

@@ -105,7 +105,9 @@ Examples:
 - If user wants to DELETE a REMINDER → use "delete_reminder" (NOT delete_file)
 - If user wants to DELETE a TASK → use "delete_task" (NOT delete_file)
 - If user wants to DELETE an EXPENSE → use "delete_expense" (NOT delete_file)
-- If user wants to DELETE an ENTIRE FILE → use "delete_file" (RARELY needed)
+- If user wants to DELETE an ENTIRE FILE → use "delete_file"
+- If user wants to DELETE an ENTIRE FOLDER → use "delete_file" with target folder and filename="*" (engine handles it)
+- delete_file also works for folders: set target.folder="Zefirka", target.filename="Коледж"
 - For ALL deletes: use "query" to ask confirmation first, then set confirmed=true
 - If user has a URL → "fetch_url"
 - If casual chat (hello, greetings, opinions) → "query"

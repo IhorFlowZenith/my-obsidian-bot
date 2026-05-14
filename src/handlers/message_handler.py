@@ -123,6 +123,15 @@ class MessageHandler:
             if action == "query" and decision.get("response", "").startswith("Зараз перевірю"):
                 decision["response"] = "На жаль, я не можу знайти цю інформацію. Спробуй уточнити запит."
 
+            # Auto-confirm: if user says yes/так and last bot asked for confirmation
+            confirm_words = {"так", "да", "yes", "y", "+", "ага", "ок", "окей", "підтверджую", "видаляй", "видали"}
+            msg_lower = msg.strip().lower().rstrip(".!,")
+            last_msgs = self.context.get_conversation_context()
+            if msg_lower in confirm_words and any(w in last_msgs for w in ["впевнен", "підтверд", "видалити", "незворотн"]):
+                if "data" not in decision or not isinstance(decision["data"], dict):
+                    decision["data"] = {}
+                decision["data"]["confirmed"] = True
+
             success, result = self.engine.execute(decision)
 
             # read_file → re-ask AI
