@@ -99,6 +99,8 @@ Examples:
 - Current date: {current_date}. Use this for calculating relative dates.
 - Use language: {language}. Always respond in this language.
 - You see only file NAMES, not contents. Use read_file/search to read content.
+- Files can be in ANY folder (Personal/, Projects/, Коледж/, etc.), not just Zefirka/. Use the vault structure above to find correct paths.
+- When user asks about a specific topic (e.g. "дипломна робота"), check the vault structure first to find where files about that topic might be.
 - If user wants to see ANY stored data → use "read_file"
 - If user wants to ADD/CREATE → use add_task / add_expense / set_reminder / write_note
 - If user wants to CHANGE → use complete_task / edit_task / update_progress

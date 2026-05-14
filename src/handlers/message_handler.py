@@ -101,27 +101,32 @@ class MessageHandler:
             action = decision.get("action", "")
             data = decision.get("data", {})
 
-            # Bypass: if AI used "query" but user asks about stored data → force read_file
+            # Bypass: if AI says "давай подивлюсь/зараз перевірю" but uses query → force search
             if action == "query":
-                msg_lower = msg.lower()
-                if any(w in msg_lower for w in ["задач", "завдан", "справ", "нагадуван", "remind", "task"]):
-                    action = "read_file"
-                    decision["action"] = "read_file"
-                    decision["target"] = {"folder": "Zefirka", "filename": "tasks.md"}
-                elif any(w in msg_lower for w in ["бюджет", "витрат", "фінанс", "грош", "budget", "expense"]):
-                    action = "read_file"
-                    decision["action"] = "read_file"
-                    decision["target"] = {"folder": "Zefirka", "filename": "finances.md"}
-                elif any(w in msg_lower for w in ["проект", "project"]):
-                    action = "read_file"
-                    decision["action"] = "read_file"
-                    decision["target"] = {"folder": "Zefirka", "filename": "projects.md"}
-                elif any(w in msg_lower for w in ["погод", "weather"]):
-                    action = "get_weather"
-                    decision["action"] = "get_weather"
-
-            if action == "query" and decision.get("response", "").startswith("Зараз перевірю"):
-                decision["response"] = "На жаль, я не можу знайти цю інформацію. Спробуй уточнити запит."
+                response = decision.get("response", "")
+                if any(phrase in response for phrase in ["Давай подивлюсь", "Зараз перевірю", "давай подивлюся"]):
+                    action = "search"
+                    decision["action"] = "search"
+                    if "data" not in decision or not isinstance(decision["data"], dict):
+                        decision["data"] = {}
+                    decision["data"]["query"] = msg.strip()[:80]
+                else:
+                    msg_lower = msg.lower()
+                    if any(w in msg_lower for w in ["задач", "завдан", "справ", "нагадуван", "remind", "task"]):
+                        action = "read_file"
+                        decision["action"] = "read_file"
+                        decision["target"] = {"folder": "Zefirka", "filename": "tasks.md"}
+                    elif any(w in msg_lower for w in ["бюджет", "витрат", "фінанс", "грош", "budget", "expense"]):
+                        action = "read_file"
+                        decision["action"] = "read_file"
+                        decision["target"] = {"folder": "Zefirka", "filename": "finances.md"}
+                    elif any(w in msg_lower for w in ["проект", "project"]):
+                        action = "read_file"
+                        decision["action"] = "read_file"
+                        decision["target"] = {"folder": "Zefirka", "filename": "projects.md"}
+                    elif any(w in msg_lower for w in ["погод", "weather"]):
+                        action = "get_weather"
+                        decision["action"] = "get_weather"
 
             # Auto-confirm: if user says yes/так and last bot asked for confirmation
             confirm_words = {"так", "да", "yes", "y", "+", "ага", "ок", "окей", "підтверджую", "видаляй", "видали"}
@@ -134,7 +139,7 @@ class MessageHandler:
 
             success, result = self.engine.execute(decision)
 
-            # read_file → re-ask AI
+            # read_file → re-ask AI (with auto-fallback to search)
             if action == "read_file":
                 if success and result.startswith(FILE_CONTENT_MARKER):
                     parts = result.split(":", 2)
@@ -147,22 +152,27 @@ class MessageHandler:
                         self.language,
                     )
                     final = analysis.get("response", result)[:4096]
+                    await update.message.reply_text(_md_to_html(final), parse_mode="HTML")
+                    self.context.add_to_history("bot", final)
+                    self.context.add_action("read_file", file_path, True)
+                    return
                 else:
-                    file_path = decision.get("target", {}).get("filename", "?")
-                    analysis = self.deepseek.analyze_request(
-                        f"User asked: {msg}\n\nFile '{file_path}' was not found (vault is empty). "
-                        f"Respond to the user in {self.language} with a friendly message that "
-                        f"there is no data yet, and offer to create it.",
-                        self.router.get_routing_guide(),
-                        self.context.get_conversation_context(),
-                        self.language,
-                    )
-                    final = analysis.get("response", result)[:4096]
-                await update.message.reply_text(_md_to_html(final), parse_mode="HTML")
-                self.context.add_to_history("bot", final)
-                self.context.add_action("read_file", file_path, success)
-                self.action_log.log("read_file", file_path, True)
-                return
+                    # File not found at specified path — try search
+                    query = decision.get("target", {}).get("filename", msg)[:60]
+                    decision["action"] = "search"
+                    decision["data"] = {"query": query}
+                    success2, result2 = self.engine.execute(decision)
+                    if success2:
+                        await update.message.reply_text(result2, parse_mode="HTML")
+                        self.context.add_to_history("bot", result2)
+                        self.context.add_action("search", query, True)
+                        return
+                    # Search also failed — graceful message
+                    fallback = f"📄 Файл '{query}' не знайдено. Спробуй уточнити назву або створити новий."
+                    await update.message.reply_text(fallback)
+                    self.context.add_to_history("bot", fallback)
+                    self.context.add_action("read_file+fail", query, False)
+                    return
 
             # fetch_url → re-ask AI with content
             if action == "fetch_url" and success and result.startswith(URL_CONTENT_MARKER):
