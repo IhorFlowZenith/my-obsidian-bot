@@ -103,20 +103,32 @@ class MessageHandler:
             data = decision.get("data", {})
 
             # read_file → re-ask AI
-            if action == "read_file" and success and result.startswith(FILE_CONTENT_MARKER):
-                parts = result.split(":", 2)
-                file_path = parts[1]
-                file_content = parts[2]
-                analysis = self.deepseek.analyze_request(
-                    f"User asked: {msg}\n\nFile ({file_path}):\n{file_content[:3000]}\n\nAnalyze.",
-                    self.router.get_routing_guide(),
-                    self.context.get_conversation_context(),
-                    self.language,
-                )
-                final = analysis.get("response", result)[:4096]
+            if action == "read_file":
+                if success and result.startswith(FILE_CONTENT_MARKER):
+                    parts = result.split(":", 2)
+                    file_path = parts[1]
+                    file_content = parts[2]
+                    analysis = self.deepseek.analyze_request(
+                        f"User asked: {msg}\n\nFile ({file_path}):\n{file_content[:3000]}\n\nAnalyze and respond.",
+                        self.router.get_routing_guide(),
+                        self.context.get_conversation_context(),
+                        self.language,
+                    )
+                    final = analysis.get("response", result)[:4096]
+                else:
+                    file_path = decision.get("target", {}).get("filename", "?")
+                    analysis = self.deepseek.analyze_request(
+                        f"User asked: {msg}\n\nFile '{file_path}' was not found (vault is empty). "
+                        f"Respond to the user in {self.language} with a friendly message that "
+                        f"there is no data yet, and offer to create it.",
+                        self.router.get_routing_guide(),
+                        self.context.get_conversation_context(),
+                        self.language,
+                    )
+                    final = analysis.get("response", result)[:4096]
                 await update.message.reply_text(_md_to_html(final), parse_mode="HTML")
                 self.context.add_to_history("bot", final)
-                self.context.add_action("read_file", file_path, True)
+                self.context.add_action("read_file", file_path, success)
                 self.action_log.log("read_file", file_path, True)
                 return
 
