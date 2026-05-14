@@ -456,6 +456,8 @@ class SmartActionEngine:
         file_data = self.github.get_file(file_path)
         if not file_data:
             return False, "❌ File not found"
+        if not isinstance(file_data, dict):
+            return False, f"❌ '{file_path}' is a directory, not a file"
         sha = file_data.get("sha")
         ok = self.github.delete_file(file_path, f"Deleted: {filename}", sha)
         return (True, f"🗑 Deleted: {file_path}") if ok else (False, "❌ Delete failed")

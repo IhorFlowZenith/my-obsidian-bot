@@ -102,7 +102,11 @@ Examples:
 - If user wants to see ANY stored data → use "read_file"
 - If user wants to ADD/CREATE → use add_task / add_expense / set_reminder / write_note
 - If user wants to CHANGE → use complete_task / edit_task / update_progress
-- If user wants to DELETE → use "query" to ask confirmation first, then delete_file with confirmed=true
+- If user wants to DELETE a REMINDER → use "delete_reminder" (NOT delete_file)
+- If user wants to DELETE a TASK → use "delete_task" (NOT delete_file)
+- If user wants to DELETE an EXPENSE → use "delete_expense" (NOT delete_file)
+- If user wants to DELETE an ENTIRE FILE → use "delete_file" (RARELY needed)
+- For ALL deletes: use "query" to ask confirmation first, then set confirmed=true
 - If user has a URL → "fetch_url"
 - If casual chat (hello, greetings, opinions) → "query"
 
