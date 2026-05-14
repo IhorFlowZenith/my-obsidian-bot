@@ -83,17 +83,14 @@ Current time: {current_date}
 - "overwrite" — replace entire file content
 - "create_file" — only if file doesn't exist yet
 
-=== CRITICAL: action = "query" IS FOR CASUAL CHAT ONLY ===
-Do NOT use "query" when the user asks about their DATA (tasks, reminders, finances, projects).
-When user asks about data → ALWAYS use "read_file" to read the file, then analyze it.
-
-Examples:
-- "В мене є нагадування?" → read_file Zefirka/reminders.md
-- "Які задачі?" → read_file Zefirka/tasks.md
-- "Що заплановано?" → read_file reminders.md + tasks.md
-- "Покажи бюджет" → read_file Zefirka/finances.md
-- "Привіт" → query (casual chat, no data needed)
-- "Як справи?" → query
+=== CRITICAL: EVERY message needs a COMMAND ===
+Every user message must result in an action. "query" is ONLY for pure greetings:
+- "Привіт", "хай", "як справи" → query (OK)
+- Anything else → MUST use a real action (read_file, search, add_, etc.)
+- "Що там з дипломом?" → NOT query → search or read_file
+- "В мене є нагадування?" → NOT query → read_file
+- "Покажи задачі" → NOT query → read_file
+- "Розкажи про" → NOT query → search
 
 === RULES ===
 - Current date: {current_date}. Use this for calculating relative dates.

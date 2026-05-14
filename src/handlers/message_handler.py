@@ -101,32 +101,21 @@ class MessageHandler:
             action = decision.get("action", "")
             data = decision.get("data", {})
 
-            # Bypass: if AI says "давай подивлюсь/зараз перевірю" but uses query → force search
+            # CRITICAL: every message must produce a command.
+            # If AI used "query" and it's NOT pure casual chat → force search
+            GREETINGS = {"привіт", "хай", "hello", "доброго", "добрий", "добридень",
+                         "вітаю", "здоров", "йоу", "ку", "hi", "how are", "чим займаєшся",
+                         "як справи", "як ти", "що робиш", "добре", "норм"}
             if action == "query":
-                response = decision.get("response", "")
-                if any(phrase in response for phrase in ["Давай подивлюсь", "Зараз перевірю", "давай подивлюся"]):
+                msg_clean = msg.strip().lower()[:30]
+                if any(g in msg_clean for g in GREETINGS):
+                    pass  # real greeting → let AI respond as-is
+                else:
                     action = "search"
                     decision["action"] = "search"
                     if "data" not in decision or not isinstance(decision["data"], dict):
                         decision["data"] = {}
                     decision["data"]["query"] = msg.strip()[:80]
-                else:
-                    msg_lower = msg.lower()
-                    if any(w in msg_lower for w in ["задач", "завдан", "справ", "нагадуван", "remind", "task"]):
-                        action = "read_file"
-                        decision["action"] = "read_file"
-                        decision["target"] = {"folder": "Zefirka", "filename": "tasks.md"}
-                    elif any(w in msg_lower for w in ["бюджет", "витрат", "фінанс", "грош", "budget", "expense"]):
-                        action = "read_file"
-                        decision["action"] = "read_file"
-                        decision["target"] = {"folder": "Zefirka", "filename": "finances.md"}
-                    elif any(w in msg_lower for w in ["проект", "project"]):
-                        action = "read_file"
-                        decision["action"] = "read_file"
-                        decision["target"] = {"folder": "Zefirka", "filename": "projects.md"}
-                    elif any(w in msg_lower for w in ["погод", "weather"]):
-                        action = "get_weather"
-                        decision["action"] = "get_weather"
 
             # Auto-confirm: if user says yes/так and last bot asked for confirmation
             confirm_words = {"так", "да", "yes", "y", "+", "ага", "ок", "окей", "підтверджую", "видаляй", "видали"}
