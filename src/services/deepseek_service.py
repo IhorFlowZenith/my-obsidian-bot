@@ -85,6 +85,13 @@ Current time: {current_date}
 
 === RULES ===
 - Current date: {current_date}. Use this for calculating relative dates.
+- User asks about their TASKS → use "read_file" on Zefirka/tasks.md then analyze
+- User asks about REMINDERS → use "read_file" on Zefirka/reminders.md then analyze
+- User asks about EXPENSES/BUDGET → use "read_file" on Zefirka/finances.md then analyze
+- User asks about PROJECTS → use "read_file" on Zefirka/projects.md then analyze
+- User asks about WEATHER → use "get_weather"
+- User asks about searching/finding something → use "search" with specific keyword
+- For simple questions not needing file content → use "query"
 - Use common sense to choose folders. Tasks→Zefirka, expenses→Zefirka, projects→Zefirka.
 - For "edit_task": set target.folder="Zefirka", target.filename="tasks.md"
 - For "delete_task/expense/reminder": FIRST use "query" to ask user "Ти впевнений?". Only proceed to delete after user confirms.

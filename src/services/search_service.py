@@ -47,11 +47,15 @@ class SearchService:
             lines.append(f"   <code>{context}</code>\n")
         return "\n".join(lines)
 
+    EXCLUDE = {"action_log.md"}
+
     def _collect_files(self) -> List[str]:
-        """Collect all file paths from vault structure"""
+        """Collect all file paths from vault structure (excluding logs)"""
         struct = self.scanner.get_structure()
         files = []
         for fname, info in struct.get("folders", {}).items():
             for f in info.get("files", []):
+                if f in self.EXCLUDE:
+                    continue
                 files.append(f"{fname}/{f}")
         return files
