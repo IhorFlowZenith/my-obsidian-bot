@@ -52,6 +52,8 @@ class SmartActionEngine:
             return self._delete_expense(data)
         elif action == "delete_reminder":
             return self._delete_reminder(data)
+        elif action == "move_reminder":
+            return self._move_reminder(data)
         elif action == "update_progress":
             return self._update_progress(data)
         elif action == "log_mood":
@@ -367,6 +369,42 @@ class SmartActionEngine:
         sha = (self.github.get_file(file_path) or {}).get("sha")
         ok = self.github.create_or_update_file(file_path, "\n".join(new_lines), f"Deleted reminder: {title}", sha=sha)
         return (True, f"🗑 Reminder deleted: {title}") if ok else (False, "❌ Delete failed")
+
+    def _move_reminder(self, data: dict) -> Tuple[bool, str]:
+        title = data.get("title", "")
+        new_date = data.get("date", "")
+        new_time = data.get("time", "")
+        file_path = "Zefirka/reminders.md"
+        content = self.github.read_file_content(file_path)
+        if not content:
+            return False, "❌ File not found"
+
+        lines = content.split("\n")
+        found = False
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+            if stripped.startswith("- [") and title.lower() in stripped.lower():
+                if new_date and new_time:
+                    lines[i] = f"- [ ] {new_date} {new_time} | {title}"
+                elif new_date:
+                    import re
+                    m = re.match(r"(- \[.\]) (\S+) (\S+)", stripped)
+                    if m:
+                        lines[i] = f"{m.group(1)} {new_date} {m.group(3)}"
+                elif new_time:
+                    import re
+                    m = re.match(r"(- \[.\]) (\S+) (\S+)", stripped)
+                    if m:
+                        lines[i] = f"{m.group(1)} {m.group(2)} {new_time} | {title}"
+                found = True
+                break
+
+        if not found:
+            return False, f"❌ Reminder not found: {title}"
+
+        sha = (self.github.get_file(file_path) or {}).get("sha")
+        ok = self.github.create_or_update_file(file_path, "\n".join(lines), f"Moved reminder: {title}", sha=sha)
+        return (True, f"✅ Reminder moved: {title} to {new_date} {new_time}") if ok else (False, "❌ Move failed")
 
     def _update_progress(self, data: dict) -> Tuple[bool, str]:
         title = data.get("title", "")

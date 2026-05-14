@@ -102,6 +102,7 @@ Examples:
 - If user wants to see ANY stored data → use "read_file"
 - If user wants to ADD/CREATE → use add_task / add_expense / set_reminder / write_note
 - If user wants to CHANGE → use complete_task / edit_task / update_progress
+- If user wants to MOVE/RESCHEDULE a reminder → use "move_reminder" with data: title, date (YYYY-MM-DD), time (HH:MM)
 - If user wants to DELETE a REMINDER → use "delete_reminder" (NOT delete_file)
 - If user wants to DELETE a TASK → use "delete_task" (NOT delete_file)
 - If user wants to DELETE an EXPENSE → use "delete_expense" (NOT delete_file)
